@@ -1,6 +1,4 @@
-use crate::chunk::{Chunk, ChunkTag};
 use crate::error::Error;
-use alloc::vec;
 use core::convert::TryInto;
 
 /// Struct representing the `fmt_` section of a WAV file
@@ -18,8 +16,8 @@ pub struct Fmt {
 }
 
 impl Fmt {
-    pub(crate) fn from_chunk(chunk: &Chunk) -> Result<Self, Error> {
-        let format = chunk.bytes[0..2]
+    pub(crate) fn from_chunk(bytes: &[u8]) -> Result<Self, Error> {
+        let format = bytes[0..2]
             .try_into()
             .map_err(|_| Error::CantParseSliceInto)
             .map(|b| u16::from_le_bytes(b))?;
@@ -28,17 +26,17 @@ impl Fmt {
             return Err(Error::UnsupportedFormat(format));
         }
 
-        let num_channels = chunk.bytes[2..4]
+        let num_channels = bytes[2..4]
             .try_into()
             .map_err(|_| Error::CantParseSliceInto)
             .map(|b| u16::from_le_bytes(b))?;
 
-        let sample_rate = chunk.bytes[4..8]
+        let sample_rate = bytes[4..8]
             .try_into()
             .map_err(|_| Error::CantParseSliceInto)
             .map(|b| u32::from_le_bytes(b))?;
 
-        let bit_depth = chunk.bytes[14..16]
+        let bit_depth = bytes[14..16]
             .try_into()
             .map_err(|_| Error::CantParseSliceInto)
             .map(|b| u16::from_le_bytes(b))?;
@@ -48,28 +46,5 @@ impl Fmt {
             sample_rate,
             bit_depth,
         })
-    }
-
-    pub(crate) fn to_chunk(&self) -> Chunk {
-        let br = ((self.sample_rate * (self.bit_depth as u32) * (self.num_channels as u32)) / 8)
-            .to_le_bytes();
-        let ba = ((self.num_channels * self.bit_depth) / 8).to_le_bytes();
-        let nc = self.num_channels.to_le_bytes();
-        let sr = self.sample_rate.to_le_bytes();
-        let bd = self.bit_depth.to_le_bytes();
-
-        let bytes = vec![
-            0x01, 0x00, // audio format
-            nc[0], nc[1], // num channels
-            sr[0], sr[1], sr[2], sr[3], // sample rate
-            br[0], br[1], br[2], br[3], // byte rate
-            ba[0], ba[1], // block align
-            bd[0], bd[1], // bits per sample
-        ];
-
-        Chunk {
-            id: ChunkTag::Fmt,
-            bytes,
-        }
     }
 }

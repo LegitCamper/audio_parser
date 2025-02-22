@@ -8,3 +8,7 @@ repository = "https://github.com/samuelleeuwenburg/wavv"
 documentation = "https://docs.rs/wavv"
 license = "Apache-2.0"
 keywords = ["audio", "wav", "no_std"]
+
+[dependencies]
+embedded-sdmmc = "0.7.0"
+heapless = "0.8.0"

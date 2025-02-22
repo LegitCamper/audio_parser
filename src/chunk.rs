@@ -1,7 +1,8 @@
 use crate::error::Error;
-use alloc::vec;
-use alloc::vec::Vec;
 use core::convert::TryInto;
+use heapless::Vec;
+
+use crate::wav::MAX_CHUNKS;
 
 /// RIFF chunks are tagged with 4 byte identifiers.
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -41,12 +42,12 @@ impl ChunkTag {
 }
 
 /// Resource Interchange File Format (RIFF) tagged chunk.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Chunk {
     /// Chunk tag
     pub id: ChunkTag,
-    /// Raw bytes for parsing based on the associated tag.
-    pub bytes: Vec<u8>,
+    pub start: usize,
+    pub end: usize,
 }
 
 impl Chunk {
@@ -61,52 +62,42 @@ impl Chunk {
             .map_err(|_| Error::CantParseSliceInto)
             .map(|b| u32::from_le_bytes(b))?;
 
-        let start = 8;
-        let end = 8 + size as usize;
-        let bytes: Vec<u8> = bytes[start..end].to_vec();
+        let start = 8 + 12;
+        let end = 20 + size as usize;
 
-        Ok(Chunk { id, bytes })
-    }
-
-    pub(crate) fn to_bytes(&self) -> Vec<u8> {
-        let mut bytes = vec![];
-
-        bytes.extend_from_slice(&self.id.to_bytes());
-        bytes.extend_from_slice(&(self.bytes.len() as u32).to_le_bytes());
-        bytes.extend_from_slice(&self.bytes);
-
-        bytes
+        Ok(Chunk { id, start, end })
     }
 }
 
-pub fn parse_chunks(bytes: &[u8]) -> Result<Vec<Chunk>, Error> {
-    let mut chunks: Vec<Chunk> = vec![];
-
+pub fn parse_chunks(bytes: &[u8]) -> Result<Vec<Chunk, MAX_CHUNKS>, Error> {
+    let mut chunks: Vec<Chunk, MAX_CHUNKS> = Vec::new();
     let riff = Chunk::from_bytes(bytes)?;
 
     if riff.id != ChunkTag::Riff {
         return Err(Error::NoRiffChunkFound);
     }
 
-    let tag: [u8; 4] = riff.bytes[0..4].try_into().unwrap();
+    let tag: [u8; 4] = bytes[8..8 + 4].try_into().unwrap();
 
     if tag != ChunkTag::Wave.to_bytes() {
         return Err(Error::NoWaveTagFound);
     }
 
-    let mut index = 4;
+    // skip parsed bytes
+    let mut index = 12;
 
-    while index < riff.bytes.len() {
-        let chunk = Chunk::from_bytes(&riff.bytes[index..])?;
+    while index < bytes.len() {
+        let chunk = &bytes[index..];
+        let chunk_info = Chunk::from_bytes(chunk)?;
 
         // Chunks should always have an even number of bytes,
         // if it is odd there is an empty padding byte at the end
-        let chunk_length = chunk.bytes.len();
+        let chunk_length = chunk_info.end - chunk_info.start;
         let padding_byte = (chunk_length & 1) * 8;
 
         index += 8 + chunk_length + padding_byte;
 
-        chunks.push(chunk);
+        chunks.push(chunk_info).unwrap();
     }
 
     Ok(chunks)

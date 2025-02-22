@@ -43,16 +43,12 @@
 #![cfg_attr(not(test), no_std)]
 #![warn(missing_docs)]
 
-extern crate alloc;
-
 mod chunk;
-mod data;
 mod error;
 mod fmt;
 mod wav;
 
 pub use chunk::{Chunk, ChunkTag};
-pub use data::Data;
 pub use error::Error;
 pub use fmt::Fmt;
-pub use wav::Wav;
+pub use wav::{Data, Wav};
