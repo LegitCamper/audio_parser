@@ -51,4 +51,4 @@ mod wav;
 pub use chunk::{Chunk, ChunkTag};
 pub use error::Error;
 pub use fmt::Fmt;
-pub use wav::{Data, Wav};
+pub use wav::{Data, DataBulk, Wav};
