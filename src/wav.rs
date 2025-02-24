@@ -1,7 +1,7 @@
 use crate::chunk::{parse_chunks, Chunk, ChunkTag};
 use crate::error::Error;
 use crate::fmt::Fmt;
-use embedded_sdmmc::{BlockDevice, File, TimeSource};
+use embedded_sdmmc::asynchronous::{BlockDevice, File, TimeSource};
 use heapless::Vec;
 
 pub(crate) const HEADER_SIZE: usize = 44;
@@ -59,11 +59,11 @@ impl<
 {
     /// Create new [`Wav`] instance from a embedded_sdmmc File
     ///
-    pub fn new(
-        mut file: File<'a, BD, TS, MAX_DIRS, MAX_FILES, MAX_VOLUMES>,
+    pub async fn new(
+        file: File<'a, BD, TS, MAX_DIRS, MAX_FILES, MAX_VOLUMES>,
     ) -> Result<Self, Error> {
         let mut bytes: [u8; HEADER_SIZE] = [0; HEADER_SIZE];
-        let read = file.read(&mut bytes).unwrap();
+        let read = file.read(&mut bytes).await.unwrap();
         assert!(bytes.len() == read);
         let parsed_chunks = parse_chunks(&bytes)?;
 
@@ -104,24 +104,24 @@ impl<
         self.file.offset() == self.file.length()
     }
 
-    pub fn next(&mut self) -> Result<Data, Error> {
+    pub async fn next(&mut self) -> Result<Data, Error> {
         assert!(!self.is_end());
         self.read += 1;
 
         match self.fmt.bit_depth {
             8 => {
                 let mut buf: [u8; 1] = [0; 1];
-                assert!(self.file.read(&mut buf).unwrap() == 1);
+                assert!(self.file.read(&mut buf).await.unwrap() == 1);
                 Ok(Data::BitDepth8(buf[0]))
             }
             16 => {
                 let mut buf: [u8; 2] = [0; 2];
-                assert!(self.file.read(&mut buf).unwrap() == 2);
+                assert!(self.file.read(&mut buf).await.unwrap() == 2);
                 Ok(Data::BitDepth16(i16::from_le_bytes([buf[0], buf[1]])))
             }
             24 => {
                 let mut buf: [u8; 3] = [0; 3];
-                assert!(self.file.read(&mut buf).unwrap() == 3);
+                assert!(self.file.read(&mut buf).await.unwrap() == 3);
 
                 let sign = buf[2] >> 7;
                 let sign_byte = if sign == 1 { 0xff } else { 0x0 };
@@ -134,14 +134,14 @@ impl<
         }
     }
 
-    pub fn next_n<const NUM: usize>(&mut self) -> Result<DataBulk<NUM>, Error> {
+    pub async fn next_n<const NUM: usize>(&mut self) -> Result<DataBulk<NUM>, Error> {
         assert!(!self.is_end());
 
         match self.fmt.bit_depth {
             8 => {
                 self.read += NUM;
                 let mut buf: [u8; NUM] = [0; NUM];
-                self.file.read(&mut buf).unwrap();
+                self.file.read(&mut buf).await.unwrap();
                 Ok(DataBulk::BitDepth8(Vec::from_slice(&buf).unwrap()))
             }
             16 => {
