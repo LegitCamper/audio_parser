@@ -38,8 +38,8 @@ pub struct Wav<
     const MAX_FILES: usize,
     const MAX_VOLUMES: usize,
 > {
-    pub file: File<'a, BD, TS, MAX_DIRS, MAX_FILES, MAX_VOLUMES>,
-    pub read: usize,
+    file: File<'a, BD, TS, MAX_DIRS, MAX_FILES, MAX_VOLUMES>,
+    read: usize,
     /// The Audio sample data
     pub data: Chunk,
     /// Contains data from the fmt chunk / header part of the file
