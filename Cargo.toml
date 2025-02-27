@@ -10,7 +10,7 @@ license = "Apache-2.0"
 keywords = ["audio", "wav", "no_std"]
 
 [dependencies]
-embedded-sdmmc = "0.7.0"
+embedded-sdmmc = "0.8.0"
 heapless = "0.8.0"
 
 # [patch.crates-io]
