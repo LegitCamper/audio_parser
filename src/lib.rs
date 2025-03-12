@@ -102,7 +102,8 @@ impl<const CHUNK_LEN: usize> AudioFile<CHUNK_LEN> {
     ) -> bool {
         if into_buf.len() > self.file_buffer.len() {
             panic!(
-                "into_buf len too large. Max len: {}",
+                "into_buf: {} len too large. Max len: {}",
+                into_buf.len(),
                 self.file_buffer.len()
             );
         }
