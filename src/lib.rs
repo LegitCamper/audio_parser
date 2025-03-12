@@ -133,4 +133,8 @@ impl AudioFile {
 
         return true;
     }
+
+    pub fn destroy(self) -> File {
+        self.file
+    }
 }
