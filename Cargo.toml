@@ -1,5 +1,5 @@
 [package]
-name = "wavv"
+name = "audio_parser"
 version = "0.2.0"
 authors = ["Samuel Leeuwenburg <samleeuwenburg@gmail.com>"]
 edition = "2018"
