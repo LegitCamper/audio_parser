@@ -1,8 +1,8 @@
-use crate::error::Error;
+use super::error::Error;
 use core::convert::TryInto;
 use heapless::Vec;
 
-use crate::wav::MAX_CHUNKS;
+pub const MAX_CHUNKS: usize = 5;
 
 /// RIFF chunks are tagged with 4 byte identifiers.
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -106,7 +106,7 @@ pub fn parse_chunks(bytes: &[u8]) -> Result<Vec<Chunk, MAX_CHUNKS>, Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::error::Error;
+    use crate::wav::error::Error;
 
     #[test]
     fn should_parse_chunks() {

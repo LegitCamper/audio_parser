@@ -10,8 +10,7 @@ license = "Apache-2.0"
 keywords = ["audio", "wav", "no_std"]
 
 [dependencies]
-embedded-sdmmc = "0.8.0"
+embedded-sdmmc-async = { git = "https://github.com/LegitCamper/embedded-sdmmc-rs.git", branch = "async", features = [
+  "defmt-log",
+], default-features = false }
 heapless = "0.8.0"
-
-[patch.crates-io]
-embedded-sdmmc = { git = "https://github.com/Be-ing/embedded-sdmmc-rs", rev = "7b15cf594ed038df271ad47e2bfc11277defe731" }

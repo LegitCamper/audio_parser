@@ -1,4 +1,4 @@
-use crate::chunk::ChunkTag;
+use crate::wav::chunk::ChunkTag;
 
 /// Error type for different parsing failures
 #[derive(Debug, PartialEq)]

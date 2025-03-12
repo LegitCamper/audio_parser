@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::{wav::error::Error, AudioFormat};
 use core::convert::TryInto;
 
 /// Struct representing the `fmt_` section of a WAV file
@@ -7,6 +7,7 @@ use core::convert::TryInto;
 ///
 /// [`here`]: http://soundfile.sapp.org/doc/WaveFormat/
 pub struct Fmt {
+    pub audio_format: AudioFormat,
     /// sample rate, typical values are `44_100`, `48_000` or `96_000`
     pub sample_rate: u32,
     /// number of audio channels in the sample data, channels are interleaved
@@ -22,9 +23,14 @@ impl Fmt {
             .map_err(|_| Error::CantParseSliceInto)
             .map(|b| u16::from_le_bytes(b))?;
 
-        if format != 1 {
-            return Err(Error::UnsupportedFormat(format));
-        }
+        // if format != 1 {
+        //     return Err(Error::UnsupportedFormat(format));
+        // }
+        //
+        let format = match format {
+            1 => Ok(AudioFormat::Pcm),
+            _ => Err(Error::UnsupportedFormat(format)),
+        }?;
 
         let num_channels = bytes[2..4]
             .try_into()
@@ -42,6 +48,7 @@ impl Fmt {
             .map(|b| u16::from_le_bytes(b))?;
 
         Ok(Fmt {
+            audio_format: format,
             num_channels,
             sample_rate,
             bit_depth,
