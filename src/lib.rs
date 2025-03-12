@@ -6,8 +6,6 @@ use heapless::Vec;
 
 mod wav;
 
-const SD_CARD_CHUNK_LEN: usize = 512;
-
 /// Enum to hold samples for different bit depths
 #[derive(Debug)]
 pub enum BitDepth {
@@ -26,9 +24,9 @@ pub enum AudioFormat {
 }
 
 /// Struct representing an audio file
-pub struct AudioFile {
+pub struct AudioFile<const CHUNK_LEN: usize = 512> {
     file: File,
-    file_buffer: [u8; SD_CARD_CHUNK_LEN],
+    file_buffer: [u8; CHUNK_LEN],
     /// How much read of the Audio section
     pub read: usize,
     /// The start of the audio section
@@ -44,12 +42,12 @@ pub struct AudioFile {
     pub bit_depth: u16,
 }
 
-impl AudioFile {
+impl<const CHUNK_LEN: usize> AudioFile<CHUNK_LEN> {
     pub async fn new_wav<'a, D: BlockDevice, TS: TimeSource>(
         mut file: File,
         sd_controller: &mut Controller<D, TS>,
         volume: &Volume,
-    ) -> Result<AudioFile, wav::error::Error> {
+    ) -> Result<Self, wav::error::Error> {
         let mut bytes: [u8; wav::HEADER_SIZE] = [0; wav::HEADER_SIZE];
         let read = sd_controller
             .read(volume, &mut file, &mut bytes)
@@ -89,7 +87,7 @@ impl AudioFile {
             sample_rate: fmt.sample_rate,
             num_channels: fmt.num_channels,
             bit_depth: fmt.bit_depth,
-            file_buffer: [0u8; SD_CARD_CHUNK_LEN],
+            file_buffer: [0u8; CHUNK_LEN],
         })
     }
 
@@ -122,7 +120,7 @@ impl AudioFile {
                 .await
                 .unwrap();
 
-            if len != SD_CARD_CHUNK_LEN {
+            if len != CHUNK_LEN {
                 return false;
             }
 
