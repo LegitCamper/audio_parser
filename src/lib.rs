@@ -26,7 +26,6 @@ pub enum AudioFormat {
 /// Struct representing an audio file
 pub struct AudioFile<const CHUNK_LEN: usize = 512> {
     file: File,
-    file_buffer: [u8; CHUNK_LEN],
     /// How much read of the Audio section
     pub read: usize,
     /// The start of the audio section
@@ -87,50 +86,20 @@ impl<const CHUNK_LEN: usize> AudioFile<CHUNK_LEN> {
             sample_rate: fmt.sample_rate,
             num_channels: fmt.num_channels,
             bit_depth: fmt.bit_depth,
-            file_buffer: [0u8; CHUNK_LEN],
         })
     }
 
-    // this function fills the `into_buf` with bytes (the exact amount in the buffer)
-    // It reads the SD card in 512 KB chunks to prevent unnecessary reads and keeps an
-    // internal buffer to cache bytes for the next read call
     pub async fn read_exact<'a, D: BlockDevice, TS: TimeSource>(
         &mut self,
         sd_controller: &mut Controller<D, TS>,
         volume: &Volume,
         into_buf: &mut [u8],
-    ) -> bool {
-        if into_buf.len() > self.file_buffer.len() {
-            panic!(
-                "into_buf: {} len too large. Max len: {}",
-                into_buf.len(),
-                self.file_buffer.len()
-            );
-        }
-
-        if (self.file_buffer.len() - self.read) >= into_buf.len() {
-            into_buf.copy_from_slice(&self.file_buffer[self.read..(self.read + into_buf.len())]);
-            self.read += into_buf.len();
-        } else {
-            let num_bytes = self.file_buffer.len() - self.read;
-            into_buf[..num_bytes].copy_from_slice(&self.file_buffer[self.read..]);
-
-            // fill the file_buffer
-            let len = sd_controller
-                .read(volume, &mut self.file, &mut self.file_buffer)
-                .await
-                .unwrap();
-
-            if len != CHUNK_LEN {
-                return false;
-            }
-
-            let num_bytes_new = into_buf.len() - num_bytes;
-            into_buf[num_bytes..].copy_from_slice(&self.file_buffer[..num_bytes_new]);
-            self.read = num_bytes_new;
-        }
-
-        return true;
+    ) -> usize {
+        // fill the file_buffer
+        sd_controller
+            .read(volume, &mut self.file, into_buf)
+            .await
+            .unwrap()
     }
 
     pub fn destroy(self) -> File {
