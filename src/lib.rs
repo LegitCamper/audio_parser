@@ -95,6 +95,7 @@ impl<const CHUNK_LEN: usize> AudioFile<CHUNK_LEN> {
         volume: &Volume,
         into_buf: &mut [u8],
     ) -> usize {
+        self.read += into_buf.len();
         // fill the file_buffer
         sd_controller
             .read(volume, &mut self.file, into_buf)
