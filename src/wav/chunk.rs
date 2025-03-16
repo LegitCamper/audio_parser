@@ -15,6 +15,8 @@ pub enum ChunkTag {
     Data,
     /// File identifier, should be located right after the RIFF tag and chunk size
     Wave,
+    /// Optional Metadata chunk for Title, album, etc...
+    Info,
     /// Unkown/unhandled chunk tag, useful for parsing [`Chunk`] bytes.
     Unknown([u8; 4]),
 }
@@ -36,6 +38,7 @@ impl ChunkTag {
             ChunkTag::Fmt => [b'f', b'm', b't', b' '],
             ChunkTag::Data => [b'd', b'a', b't', b'a'],
             ChunkTag::Wave => [b'W', b'A', b'V', b'E'],
+            ChunkTag::Info => [b'I', b'N', b'F', b'O'],
             ChunkTag::Unknown(bytes) => bytes,
         }
     }
