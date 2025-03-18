@@ -17,6 +17,10 @@ pub enum Error {
     NoDataChunkFound,
     /// No fmt/header chunk found
     NoFmtChunkFound,
+    /// No LIST tag found
+    NoListTagFound,
+    /// No INFO tag found
+    NoInfoTagFound,
     /// Unsupported bit depth
     UnsupportedBitDepth(u16),
     /// Unsupported format

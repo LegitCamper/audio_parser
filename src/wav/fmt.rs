@@ -1,4 +1,4 @@
-use crate::{wav::error::Error, AudioFormat};
+use crate::{wav::error::Error, AudioCodec};
 use core::convert::TryInto;
 
 /// Struct representing the `fmt_` section of a WAV file
@@ -7,7 +7,7 @@ use core::convert::TryInto;
 ///
 /// [`here`]: http://soundfile.sapp.org/doc/WaveFormat/
 pub struct Fmt {
-    pub audio_format: AudioFormat,
+    pub audio_format: AudioCodec,
     /// sample rate, typical values are `44_100`, `48_000` or `96_000`
     pub sample_rate: u32,
     /// number of audio channels in the sample data, channels are interleaved
@@ -28,7 +28,7 @@ impl Fmt {
         // }
         //
         let format = match format {
-            1 => Ok(AudioFormat::Pcm),
+            1 => Ok(AudioCodec::UncompressedPcm),
             _ => Err(Error::UnsupportedFormat(format)),
         }?;
 
